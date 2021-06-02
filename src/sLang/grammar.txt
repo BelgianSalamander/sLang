@@ -1,0 +1,23 @@
+code → (statement ";")*
+
+functionCall → assignment "(" (assignment assignment*)? ")"
+
+statement   →      block
+block       →      "{" code "}" | keywordStatement
+keywordStatement -> ifStatement | declaration | fuctionDeclaration | assignment
+ifStatement →      "if(" statement ")" block ("elif "(" statement ")" block)* ("else" block)?| declaration
+declaration →      "var " NAME " = " statement | assignment
+functionDeclaration → "func " NAME "(" (NAME NAME*)? ")" block
+//Returns a value
+assignment  →      NAME " = " statement | expressionStatement
+expressionStatement → expression;
+expression     → literal | unary | binary | grouping ;
+
+list -> "[" (expression ("," expression)*)? "]"
+
+literal        → NUMBER | STRING | "true" | "false" | "nil" ;
+grouping       → "(" assignment ")" ;
+unary          → ( "-" | "!" ) assignment ;
+binary         → assignment operator assignment ;
+operator       → "==" | "!=" | "<" | "<=" | ">" | ">="
+               | "+"  | "-"  | "*" | "/" | ".";
