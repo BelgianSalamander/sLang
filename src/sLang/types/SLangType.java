@@ -27,6 +27,13 @@ public class SLangType {
 
             return new SLangObject(Types.SLangBoolean, Objects.equals(self.getValue(), other.getValue()));
         }));
+
+        addMethod("operatorNOT_EQUAL", new SLangJavaFunction((List<SLangObject> parameters, Environment environment) -> {
+            SLangObject self = parameters.get(0);
+            SLangObject other = parameters.get(1);
+
+            return new SLangObject(Types.SLangBoolean, !Objects.equals(self.getValue(), other.getValue()));
+        }));
         this.name = name;
     }
 
