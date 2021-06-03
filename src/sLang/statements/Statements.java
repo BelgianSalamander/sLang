@@ -13,35 +13,35 @@ import java.util.stream.Collectors;
 
 public class Statements {
     public static class ExpressionStatement implements Statement{
-        private final Expression expression;
+        private final Statement expression;
 
-        public ExpressionStatement(Expression expression) {
+        public ExpressionStatement(Statement expression) {
             this.expression = expression;
         }
 
         @Override
         public SLangObject run(Environment environment) throws SLangException {
-            return expression.evaluate(environment);
+            return expression.run(environment);
         }
 
         @Override
         public String toString() {
-            return expression.toString() + ";";
+            return expression.toString();
         }
     }
 
     public static class VariableStatement implements Statement{
         private final String name;
-        private final Expression initializer;
+        private final Statement initializer;
 
-        public VariableStatement(String name, Expression initializer) {
+        public VariableStatement(String name, Statement initializer) {
             this.name = name;
             this.initializer = initializer;
         }
 
         @Override
         public SLangObject run(Environment environment) throws SLangException {
-            environment.define(name, initializer.evaluate(environment));
+            environment.define(name, initializer.run(environment));
             return new SLangObject(Types.SLangNull, null);
         }
 
@@ -53,16 +53,16 @@ public class Statements {
 
     public static class AssignmentStatement implements Statement{
         private final String name;
-        private final Expression value;
+        private final Statement value;
 
-        public AssignmentStatement(String name, Expression value) {
+        public AssignmentStatement(String name, Statement value) {
             this.name = name;
             this.value = value;
         }
 
         @Override
         public SLangObject run(Environment environment) throws SLangException {
-            SLangObject value = this.value.evaluate(environment);
+            SLangObject value = this.value.run(environment);
             environment.set(name, value);
             return value;
         }
@@ -104,9 +104,9 @@ public class Statements {
 
     public static class IfStatement implements Statement{
         final List<Statement> statements;
-        final List<Expression> conditions;
+        final List<Statement> conditions;
 
-        public IfStatement(List<Statement> statements, List<Expression> conditions) {
+        public IfStatement(List<Statement> statements, List<Statement> conditions) {
             this.statements = statements;
             this.conditions = conditions;
         }
@@ -115,7 +115,7 @@ public class Statements {
         public SLangObject run(Environment environment) throws SLangException {
             int i;
             for(i = 0; i < conditions.size(); i++){
-                if(conditions.get(i).evaluate(environment).toBool()){
+                if(conditions.get(i).run(environment).toBool()){
                     Environment newEnvironment = new Environment(environment);
                     statements.get(i).run(newEnvironment);
                     return null;
@@ -145,8 +145,8 @@ public class Statements {
         private final Statement whatToCall;
         private final List<Statement> arguments;
 
-        public FunctionCall(Expression whatToCall, List<Statement> arguments) {
-            this.whatToCall = FunctionCall.this.whatToCall;
+        public FunctionCall(Statement whatToCall, List<Statement> arguments) {
+            this.whatToCall = whatToCall;
             this.arguments = arguments;
         }
 
@@ -164,6 +164,11 @@ public class Statements {
                 }).collect(Collectors.toList()));
             }
             throw new UnsupportedOperatorException(callable.getType() + " is not a function!");
+        }
+
+        @Override
+        public String toString() {
+            return whatToCall + "(" + String.join(",", arguments.stream().map((Statement s) -> s.toString()).collect(Collectors.toList())) + ")";
         }
     }
 
@@ -185,18 +190,28 @@ public class Statements {
             environment.define(name, functionSLangObject);
             return functionSLangObject;
         }
+
+        @Override
+        public String toString() {
+            return name + " (" + String.join(", ", parameterNames) + ")" + code;
+        }
     }
 
     public static class ReturnStatement implements Statement{
-        private final Expression expression;
+        private final Statement expression;
 
-        public ReturnStatement(Expression expression) {
+        public ReturnStatement(Statement expression) {
             this.expression = expression;
         }
 
         @Override
         public SLangObject run(Environment environment) throws SLangException {
-            return expression.evaluate(environment);
+            return expression.run(environment);
+        }
+
+        @Override
+        public String toString() {
+            return "return " + expression;
         }
     }
 }

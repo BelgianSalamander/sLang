@@ -41,6 +41,6 @@ public class Token {
 
     @Override
     public String toString() {
-        return "sLang Token [ length = " + length + ", type = " + type + ", value = " + value + " ]";
+        return "sLang Token [ length = " + length + ", type = " + type + ", value = '" + value + "' line = " + line + " ]";
     }
 }

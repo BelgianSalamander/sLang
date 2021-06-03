@@ -8,8 +8,11 @@ public class SkipWhitespace implements Tokenizer{
     @Override
     public Token tokenize(String input, int index){
         int consumedChars = 0;
+        String value = "";
+
         while(index < input.length()){
             if(Character.isWhitespace(input.charAt(index))) {
+                value += input.charAt(index);
                 consumedChars++;
                 index++;
             }else{
@@ -17,6 +20,6 @@ public class SkipWhitespace implements Tokenizer{
             }
         }
 
-        return consumedChars == 0 ? null : new Token(consumedChars, TokenType.WHITESPACE, "");
+        return consumedChars == 0 ? null : new Token(consumedChars, TokenType.WHITESPACE, value);
     }
 }

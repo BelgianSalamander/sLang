@@ -1,10 +1,10 @@
 code → (statement ";")*
 
-functionCall → assignment "(" (assignment assignment*)? ")"
+functionCall → (name | grouping) "(" (assignment assignment*)? ")"
 
 statement   →      block
 block       →      "{" code "}" | keywordStatement
-keywordStatement -> ifStatement | declaration | fuctionDeclaration | assignment
+keywordStatement -> ifStatement | declaration | functionDeclaration | assignment
 ifStatement →      "if(" statement ")" block ("elif "(" statement ")" block)* ("else" block)?| declaration
 declaration →      "var " NAME " = " statement | assignment
 functionDeclaration → "func " NAME "(" (NAME NAME*)? ")" block

@@ -22,8 +22,11 @@ public class Tokenizers {
                     token.setLine(line);
                     tokenized = true;
                     if(!(token.getType().equals(TokenType.WHITESPACE) || token.getType().equals(TokenType.COMMENT))) {
-                        if(token.getType().equals(TokenType.SEMICOLON)) line++;
                         tokens.add(token);
+                    }else if(token.getType().equals(TokenType.WHITESPACE)){
+                        for(char character : token.getValue().toCharArray()){
+                            if(character == '\n') line++;
+                        }
                     }
                     break;
                 }

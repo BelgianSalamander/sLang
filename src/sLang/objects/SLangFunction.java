@@ -29,4 +29,9 @@ public class SLangFunction {
 
         return code.run(functionalEnvironment);
     }
+
+    @Override
+    public String toString() {
+        return "<sLang Function [ parameters = " + parameterNames + " code = " + code + " >";
+    }
 }

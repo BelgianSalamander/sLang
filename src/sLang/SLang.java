@@ -48,9 +48,9 @@ public class SLang {
         }
     }
 
-    static void error(int line, SLangException exception){
+    public static void error(int line, SLangException exception){
         String message = exception.getMessage();
-        report(line, "", message, exception.getClass().toString());
+        report(line, "", message, exception.getClass().getTypeName());
     }
 
     private static void report(int line, String s, String message, String errorType) {

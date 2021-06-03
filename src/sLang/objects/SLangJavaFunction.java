@@ -15,11 +15,17 @@ public class SLangJavaFunction extends SLangFunction{
     }
 
     public SLangJavaFunction(SLangJavaFunctionalInterface function) {
+        super(null, null);
         this.function = function;
     }
 
     @Override
     public SLangObject call(Environment environment, List<SLangObject> parameters) throws SLangException {
         return function.call(parameters, environment);
+    }
+
+    @Override
+    public String toString() {
+        return "<Java Function>";
     }
 }

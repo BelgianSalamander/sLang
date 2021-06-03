@@ -1,10 +1,7 @@
 package sLang.types;
 
-import sLang.SLang;
 import sLang.exceptions.UnsupportedOperatorException;
 import sLang.interpreter.Environment;
-import sLang.objects.ParameterList;
-import sLang.objects.SLangFunction;
 import sLang.objects.SLangJavaFunction;
 import sLang.objects.SLangObject;
 
@@ -53,7 +50,7 @@ public class Types {
                 }
                 ));
 
-        /*SLangInteger.addMethod("operatorMULTIPLY", (ParameterList parameters) ->
+        SLangInteger.addMethod("operatorMULTIPLY", new SLangJavaFunction((List<SLangObject> parameters, Environment environment) ->
         {
             SLangObject self = parameters.get(0);
             SLangObject other = parameters.get(1);
@@ -64,9 +61,10 @@ public class Types {
                 return new SLangObject(SLangFloat, (long) self.getValue() * (double) other.getValue());
             }
             throw new UnsupportedOperatorException("Operator * not supported for types 'int' and '" +other.getType().getName() + "'");
-        });
+        }
+        ));
 
-        SLangInteger.addMethod("operatorDIVIDE", (ParameterList parameters) ->
+        /*SLangInteger.addMethod("operatorDIVIDE", (ParameterList parameters) ->
         {
             SLangObject self = parameters.get(0);
             SLangObject other = parameters.get(1);

@@ -1,13 +1,16 @@
 package sLang.parser;
 
+import sLang.SLang;
 import sLang.exceptions.ParsingException;
 import sLang.expressions.Expression;
 import sLang.expressions.Expressions;
 import sLang.objects.SLangObject;
 import sLang.statements.Statement;
 import sLang.statements.Statements;
+import sLang.statements.Statements;
 import sLang.tokenizer.Token;
 import sLang.tokenizer.TokenType;
+import sLang.types.Types;
 
 import javax.print.attribute.standard.MediaSize;
 
@@ -18,26 +21,37 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Parser {
+    public static SLangObject SLangGlobalNULL = new SLangObject(SLangNull, null);
     private final List<Token> tokens;
     private int index = 0;
+    boolean hasError = false;
 
     public Parser(List<Token> tokens){
         this.tokens = tokens;
     }
 
-    public List<Statement> parse(){
+    public List<Statement> parse() {
         List<Statement> statements = new ArrayList<>();
-        try {
-            while (!isAtEnd()) {
+        while (!isAtEnd()) {
+            Token firstToken = tokens.get(index);
+            try {
                 Statement statement = statement();
                 statements.add(statement);
-                System.out.println(statement);
+                match(SEMICOLON);
+            } catch (ParsingException e) {
+                SLang.error(firstToken.getLine(), e);
+                hasError = true;
+                while (!match(SEMICOLON, RIGHT_BRACE)){
+                    step();
+                    if(isAtEnd()) break;
+                }
             }
-        }catch (ParsingException e){
-            e.printStackTrace();
         }
-
-        return statements;
+        if(!hasError) {
+            return statements;
+        }else{
+            return null;
+        }
     }
 
     private boolean match(TokenType... tokenTypes){
@@ -74,18 +88,15 @@ public class Parser {
 
 
     private Statement expressionStatement() throws ParsingException {
-        Expression expression = expression();
-        if(match(LEFT_PARENTHESE)){
-            while (!tokens.get(index).getType().equals(RIGHT_PARENTHESE))
-        }
-        consume(SEMICOLON, "Expected a ';' after expression");
+        Statement expression = expression();
+        //consume(SEMICOLON, "Expected a ';' after expression");
         return new Statements.ExpressionStatement(expression);
     }
 
     private Statement varDeclaration() throws ParsingException {
         String name = consume(NAME, "Expected a variable name").getValue();
 
-        Expression initializer = new Expressions.Literal(new SLangObject(SLangNull, null));
+        Statement initializer = new Expressions.Literal(new SLangObject(SLangNull, null));
         if(match(EQUAL)){
             initializer = expression();
         }
@@ -95,11 +106,12 @@ public class Parser {
 
     private Statement varAssignment() throws ParsingException{
         Token nextToken = tokens.get(index);
+
         if(nextToken.getType().equals(NAME)){
             index++;
             if(match(EQUAL)){
-                Expression newValue = expression();
-                consume(SEMICOLON, "Expected a ';' after an assignment");
+                Statement newValue = varAssignment();
+                //consume(SEMICOLON, "Expected a ';' after an assignment");
                 return new Statements.AssignmentStatement(nextToken.getValue(), newValue);
             }else{
                 index--;
@@ -113,8 +125,19 @@ public class Parser {
         if(match(LEFT_BRACE)){
             List<Statement> statements = new ArrayList<>();
             while((!match(RIGHT_BRACE)) && (!isAtEnd())){
-                Statement nextStatement = block();
-                statements.add(nextStatement);
+                Token firstToken = tokens.get(index);
+                try {
+                    Statement nextStatement = block();
+                    statements.add(nextStatement);
+                    match(SEMICOLON);
+                }catch (ParsingException e){
+                    hasError = true;
+                    SLang.error(firstToken.getLine(), e);
+                    while (!match(SEMICOLON, RIGHT_BRACE)){
+                        step();
+                        if(isAtEnd()) break;
+                    }
+                }
             }
             index--;
             consume(RIGHT_BRACE, "Expected a '}' to close block");
@@ -134,14 +157,24 @@ public class Parser {
             case VAR:
                 step();
                 return varDeclaration();
+            case RETURN:
+                step();
+                return returnStatement();
             default:
-                return expressionStatement();
+                return varAssignment();
         }
+    }
+
+    private Statement returnStatement() throws ParsingException{
+        if(!match(SEMICOLON)){
+            return new Statements.ReturnStatement(varAssignment());
+        }
+        return new Statements.ReturnStatement(new Expressions.Literal(SLangGlobalNULL));
     }
 
     private Statement ifStatement() throws ParsingException{
         List<Statement> statements = new ArrayList<>();
-        List<Expression> conditions = new ArrayList<>();
+        List<Statement> conditions = new ArrayList<>();
         conditions.add(expression());
         statements.add(block());
         while(match(ELIF, ELSE)){
@@ -158,8 +191,8 @@ public class Parser {
     }
 
     private Statement functionDeclaration() throws ParsingException{
-        consume(LEFT_PARENTHESE, "Expected a '(' after function declaration");
         String name = consume(NAME, "Expected a function name").getValue();
+        consume(LEFT_PARENTHESE, "Expected a '(' after function declaration");
         List<String> parameterNames = new ArrayList<>();
         while (!match(RIGHT_PARENTHESE)){
             parameterNames.add(consume(NAME, "Expected an argument name").getValue());
@@ -168,84 +201,94 @@ public class Parser {
         return new Statements.FunctionDefinition(name, block(), parameterNames);
     }
 
-    public Expression expression() throws ParsingException {
+    public Statement expression() throws ParsingException {
         return logicalOr();
     }
 
-    public Expression logicalOr() throws ParsingException{
-        Expression expression = logicalAnd();
+    public Statement logicalOr() throws ParsingException{
+        Statement expression = logicalAnd();
 
         while(match(OR)){
-            Expression right = logicalAnd();
+            Statement right = logicalAnd();
             expression = new Expressions.Binary(expression, SLangOperator.OR, right);
         }
 
         return expression;
     }
 
-    public Expression logicalAnd() throws ParsingException{
-        Expression expression = equality();
+    public Statement logicalAnd() throws ParsingException{
+        Statement expression = equality();
 
         while(match(AND)){
-            Expression right = equality();
+            Statement right = equality();
             expression = new Expressions.Binary(expression, SLangOperator.AND, right);
         }
 
         return expression;
     }
 
-    private Expression equality() throws ParsingException {
-        Expression expression = comparison();
+    private Statement equality() throws ParsingException {
+        Statement expression = comparison();
 
         while (match(DOUBLE_EQUAL, EXCLAMATION_MARK_EQUAL)){
             TokenType operator = previous().getType();
-            Expression right = comparison();
+            Statement right = comparison();
             expression = new Expressions.Binary(expression, SLangOperator.fromTokenType(operator), right);
         }
 
         return expression;
     }
 
-    private Expression comparison() throws ParsingException {
-        Expression expression = term();
+    private Statement comparison() throws ParsingException {
+        Statement expression = term();
 
         while (match(GREATER, GREATER_EQUAL, LESS, LESS_EQUAL)){
             TokenType operator = previous().getType();
-            Expression right = term();
+            Statement right = term();
             expression = new Expressions.Binary(expression, SLangOperator.fromTokenType(operator), right);
         }
 
         return expression;
     }
 
-    private Expression term() throws ParsingException {
-        Expression expression = factor();
+    private Statement term() throws ParsingException {
+        Statement expression = factor();
 
         while (match(MINUS, PLUS)){
             TokenType operator = previous().getType();
-            Expression right = factor();
+            Statement right = factor();
             expression = new Expressions.Binary(expression, SLangOperator.fromTokenType(operator), right);
         }
 
         return expression;
     }
 
-    private Expression factor() throws ParsingException {
-        Expression expression = unary();
+    private Statement factor() throws ParsingException {
+        Statement expression = getAttribute();
 
         while (match(STAR, SLASH)){
             TokenType operator = previous().getType();
-            Expression right = unary();
+            Statement right = getAttribute();
             expression = new Expressions.Binary(expression, SLangOperator.fromTokenType(operator), right);
         }
 
         return expression;
     }
 
-    private Expression unary() throws ParsingException {
+    private Statement getAttribute() throws ParsingException{
+        Statement expression = unary();
+
+        while (match(DOT)){
+            Statement right = new Expressions.Dot(expression, consume(NAME, "Expected an attribute name").getValue());
+        }
+
+        return expression;
+    }
+
+    private Statement unary() throws ParsingException {
         if(match(EXCLAMATION_MARK, MINUS)){
             TokenType operator = previous().getType();
-            Expression right = unary();
+            Statement right = unary();
             SLangOperator sLangOperator = SLangOperator.fromTokenType(operator);
             if(operator.equals(MINUS)){
                 sLangOperator = SLangOperator.NEGATE;
@@ -256,7 +299,7 @@ public class Parser {
         return primary();
     }
 
-    private Expression primary() throws ParsingException {
+    private Statement primary() throws ParsingException {
         if (match(FALSE)) {
             return new Expressions.Literal(new SLangObject(SLangBoolean, false));
         }
@@ -270,6 +313,8 @@ public class Parser {
         Token currentToken = tokens.get(index);
         TokenType type = currentToken.getType();
 
+        Statement mayBeFunctionCall = null;
+
         switch (type){
             case INTEGER:
                 index++;
@@ -282,13 +327,27 @@ public class Parser {
                 return new Expressions.Literal(new SLangObject(SLangString, currentToken.getValue()));
             case NAME:
                 index++;
-                return new Expressions.Variable(currentToken.getValue());
+                mayBeFunctionCall = new Expressions.Variable(currentToken.getValue());
+                break;
+            default:
+                if(match(LEFT_PARENTHESE)){
+                    Statement statement = varAssignment();
+                    consume(RIGHT_PARENTHESE, "Expected a ')' after expression");
+                    mayBeFunctionCall = new Expressions.Grouping(statement);
+                    //return new Expressions.Grouping(statement);
+                }
         }
 
-        if(match(LEFT_PARENTHESE)){
-            Statement statement = varAssignment();
-            consume(RIGHT_PARENTHESE, "Expected a ')' after expression");
-            return new Expressions.Grouping(statement);
+        if(mayBeFunctionCall != null){
+            while (match(LEFT_PARENTHESE)){
+                List<Statement> parameters = new ArrayList<>();
+                while(!match(RIGHT_PARENTHESE)){
+                    parameters.add(varAssignment());
+                    match(COMMA);
+                }
+                mayBeFunctionCall =  new Statements.FunctionCall(mayBeFunctionCall, parameters);
+            }
+            return mayBeFunctionCall;
         }
 
         throw new ParsingException("Couldn't understand token : " + currentToken);

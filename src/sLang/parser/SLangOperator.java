@@ -6,10 +6,20 @@ import java.util.HashMap;
 import java.util.Map;
 
 public enum SLangOperator {
-    ADD, SUBSTRACT, MULTIPLY, DIVIDE,
+    ADD, SUBTRACT, MULTIPLY, DIVIDE,
     NEGATE, NOT,
 
     EQUAL, NOT_EQUAL, LESS_EQUAL, GREATER_EQUAL, LESS, GREATER, AND, OR;
+
+    private final String functionName;
+
+    private SLangOperator(String functionName){
+        this.functionName = functionName;
+    }
+
+    private SLangOperator(){
+        this.functionName = "operator_" + this.toString().toLowerCase();
+    }
 
     private static Map<TokenType, SLangOperator> tokenToOperator;
 
@@ -21,7 +31,7 @@ public enum SLangOperator {
         tokenToOperator = new HashMap<>();
 
         tokenToOperator.put(TokenType.PLUS, ADD);
-        tokenToOperator.put(TokenType.MINUS, SUBSTRACT);
+        tokenToOperator.put(TokenType.MINUS, SUBTRACT);
         tokenToOperator.put(TokenType.STAR, MULTIPLY);
         tokenToOperator.put(TokenType.SLASH, DIVIDE);
         

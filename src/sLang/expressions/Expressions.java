@@ -11,7 +11,7 @@ import sLang.statements.Statement;
 import java.util.Arrays;
 
 public class Expressions {
-    static public class Binary implements Expression{
+    static public class Binary implements Statement{
         final Statement left, right;
         final SLangOperator operator;
 
@@ -22,7 +22,7 @@ public class Expressions {
         }
 
         @Override
-        public SLangObject evaluate(Environment environment) throws SLangException {
+        public SLangObject run(Environment environment) throws SLangException {
             SLangObject evaluatedLeft = left.run(environment);
             SLangObject evaluatedRight = right.run(environment);
             SLangObject shouldBeAFunction = evaluatedLeft.getAttribute("operator" + operator);
@@ -34,11 +34,11 @@ public class Expressions {
 
         @Override
         public String toString() {
-            return "<sLang Binary Expression [ left = " + left + ", operator = " + operator + ", right = " + right + " ] >";
+            return "<sLang Binary Statement [ left = " + left + ", operator = " + operator + ", right = " + right + " ] >";
         }
     }
 
-    static public class Unary implements Expression{
+    static public class Unary implements Statement{
         final Statement right;
         final SLangOperator operator;
 
@@ -48,7 +48,7 @@ public class Expressions {
         }
 
         @Override
-        public SLangObject evaluate(Environment environment) throws SLangException {
+        public SLangObject run(Environment environment) throws SLangException {
             SLangObject evaluatedRight = right.run(environment);
             SLangObject shouldBeAFunction = evaluatedRight.getAttribute("operator" + operator);
             if(!(shouldBeAFunction.getValue() instanceof SLangFunction)){
@@ -59,11 +59,11 @@ public class Expressions {
 
         @Override
         public String toString() {
-            return "<sLang Unary Expression [ operator = " + operator + ", right = " + right + " ] >";
+            return "<sLang Unary Statement [ operator = " + operator + ", right = " + right + " ] >";
         }
     }
 
-    static public class Literal implements Expression{
+    static public class Literal implements Statement{
         final SLangObject value;
 
         public Literal(SLangObject value){
@@ -71,16 +71,16 @@ public class Expressions {
         }
 
         @Override
-        public SLangObject evaluate(Environment environment) {
+        public SLangObject run(Environment environment) {
             return value;
         }
 
         public String toString() {
-            return "<sLang Literal Expression [ value = " + value + " ] >";
+            return value.toString();
         }
     }
 
-    static public class Grouping implements Expression{
+    static public class Grouping implements Statement{
         final Statement value;
 
         public Grouping(Statement expression){
@@ -88,16 +88,16 @@ public class Expressions {
         }
 
         @Override
-        public SLangObject evaluate(Environment environment) throws SLangException {
+        public SLangObject run(Environment environment) throws SLangException {
             return value.run(environment);
         }
 
         public String toString() {
-            return "<sLang Group Expression [ expression = " + value + " ] >";
+            return "( " + value + " )";
         }
     }
 
-    static public class Variable implements Expression{
+    static public class Variable implements Statement{
         final String name;
 
         public Variable(String name) {
@@ -105,8 +105,28 @@ public class Expressions {
         }
 
         @Override
-        public SLangObject evaluate(Environment environment) throws SLangException {
+        public SLangObject run(Environment environment) throws SLangException {
             return environment.get(name);
+        }
+
+        @Override
+        public String toString() {
+            return name;
+        }
+    }
+
+    static public class Dot implements Statement{
+        final Statement left;
+        final String right;
+
+        public Dot(Statement left, String right) {
+            this.left = left;
+            this.right = right;
+        }
+
+        @Override
+        public SLangObject run(Environment environment) throws SLangException {
+            return left.run(environment).getAttribute(right);
         }
     }
 }
