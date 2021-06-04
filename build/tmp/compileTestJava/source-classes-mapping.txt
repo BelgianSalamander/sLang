@@ -1,2 +1,0 @@
-sLang/test/SLangTest.java
- sLang.test.SLangTest
