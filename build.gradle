@@ -1,0 +1,47 @@
+buildscript {
+	repositories {
+		maven {
+			url "https://plugins.gradle.org/m2/"
+		}
+		jcenter()
+	}
+	dependencies {
+		classpath 'com.github.jengelman.gradle.plugins:shadow:5.0.0'
+	}
+}
+
+apply plugin: 'java'
+apply plugin: 'idea'
+apply plugin: 'com.github.johnrengelman.shadow'
+
+sourceCompatibility = 15
+targetCompatibility = 15
+version = '0.1.0-SNAPSHOT'
+group = 'salamander'
+archivesBaseName = "slang"
+
+repositories {
+    mavenCentral()
+}
+
+shadowJar {
+	minimize {
+		exclude(dependency('org.ow2.asm:.*'))
+	}
+	classifier = null
+}
+
+build.dependsOn shadowJar
+
+jar {
+    manifest {
+        attributes 'Implementation-Title': 'sLang',
+                'Implementation-Version': version,
+                'Main-Class': 'sLang.SLang'
+    }
+	enabled = false
+}
+
+dependencies {
+	implementation 'org.ow2.asm:asm:9.1'
+}
