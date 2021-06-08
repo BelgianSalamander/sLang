@@ -31,7 +31,7 @@ public class Types {
         SLangFunction = createType("func");
 
         createIntegerOperators();
-
+        createFloatOperators();
     }
 
     private static void createIntegerOperators(){
@@ -108,4 +108,77 @@ public class Types {
         ));
     }
 
+    private static void createFloatOperators(){
+        SLangFloat.addMethod("operatorADD", new SLangJavaFunction((List<SLangObject> parameters, Environment environment) ->
+        {
+            SLangObject self = parameters.get(0);
+            SLangObject other = parameters.get(1);
+
+            if(other.getType().equals(SLangInteger)){
+                return new SLangObject(SLangFloat, (double) self.getValue() + (long) other.getValue());
+            }else if(other.getType().equals(SLangFloat)){
+                return new SLangObject(SLangFloat, (double) self.getValue() + (double) other.getValue());
+            }
+            throw new UnsupportedOperatorException("Operator + not supported for types 'float' and '" +other.getType().getName() + "'");
+        }
+        ));
+
+        SLangFloat.addMethod("operatorSUBTRACT", new SLangJavaFunction((List<SLangObject> parameters, Environment environment) ->
+        {
+            SLangObject self = parameters.get(0);
+            SLangObject other = parameters.get(1);
+
+            if(other.getType().equals(SLangInteger)){
+                return new SLangObject(SLangFloat, (double) self.getValue() - (long) other.getValue());
+            }else if(other.getType().equals(SLangFloat)){
+                return new SLangObject(SLangFloat, (double) self.getValue() - (double) other.getValue());
+            }
+            throw new UnsupportedOperatorException("Operator - not supported for types 'float' and '" +other.getType().getName() + "'");
+        }
+        ));
+
+        SLangFloat.addMethod("operatorMULTIPLY", new SLangJavaFunction((List<SLangObject> parameters, Environment environment) ->
+        {
+            SLangObject self = parameters.get(0);
+            SLangObject other = parameters.get(1);
+
+            if(other.getType().equals(SLangInteger)){
+                return new SLangObject(SLangFloat, (double) self.getValue() * (long) other.getValue());
+            }else if(other.getType().equals(SLangFloat)){
+                return new SLangObject(SLangFloat, (double) self.getValue() * (double) other.getValue());
+            }
+            throw new UnsupportedOperatorException("Operator * not supported for types 'float' and '" +other.getType().getName() + "'");
+        }
+        ));
+
+        SLangFloat.addMethod("operatorDIVIDE", new SLangJavaFunction((List<SLangObject> parameters, Environment environment) ->
+        {
+            SLangObject self = parameters.get(0);
+            SLangObject other = parameters.get(1);
+
+            if(other.getType().equals(SLangInteger)){
+                return new SLangObject(SLangFloat, (double) self.getValue() / ((double) (long) other.getValue()));
+            }else if(other.getType().equals(SLangFloat)){
+                return new SLangObject(SLangFloat, (double) self.getValue() / (double) other.getValue());
+            }
+            throw new UnsupportedOperatorException("Operator / not supported for types 'float' and '" +other.getType().getName() + "'");
+        }
+        ));
+
+        SLangFloat.addMethod("operatorNOT", new SLangJavaFunction((List<SLangObject> parameters, Environment environment) ->
+        {
+            SLangObject self = parameters.get(0);
+
+            return new SLangObject(SLangBoolean, ! ((boolean) ((long) self.getValue() != 0)));
+        }
+        ));
+
+        SLangFloat.addMethod("operatorNEGATE", new SLangJavaFunction((List<SLangObject> parameters, Environment environment) ->
+        {
+            SLangObject self = parameters.get(0);
+
+            return new SLangObject(SLangInteger, -(double)self.getValue());
+        }
+        ));
+    }
 }

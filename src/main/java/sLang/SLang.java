@@ -31,6 +31,7 @@ public class SLang {
     }
 
     private static void runFile(String path) throws IOException {
+        System.out.println(path);
         byte[] bytes = Files.readAllBytes(Paths.get(path));
         run(new String(bytes, Charset.defaultCharset()));
     }
